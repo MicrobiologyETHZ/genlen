@@ -2,7 +2,7 @@ import argparse, os, subprocess
 from Bio import SeqIO
 
 def blast_genes(faa, db, threads):
-    arg = "diamond blastp --threads {} --max-target-seqs 1 --db {} --query {} --outfmt 6 qseqid sseqid slen pident".format(threads, db, faa)
+    arg = f'diamond blastp --threads {threads} --max-target-seqs 1 --db {db} --query {faa} --outfmt 6 qseqid sseqid slen pident'
     results = subprocess.check_output(arg, shell=True).decode()
 
     hits = [line.split("\t") for line in results.splitlines()]
@@ -31,17 +31,17 @@ def __main__():
         os.mkdir(outdir)
 
     # Call genes with prodigal
-    prodigal_output = subprocess.check_output('prodigal -c -i {} -o {}.gff -a {}.faa -d {}.fna -f gff'.format(args.contigs, outfix, outfix, outfix),shell=True).decode()
+    prodigal_output = subprocess.check_output(f'prodigal -c -i {args.contigs} -o {outfix}.gff -a {outfix}.faa -d {outfix}.fna -f gff',shell=True).decode()
 
     # Read in protein sequences
-    proteins = SeqIO.parse("{}.faa".format(outfix), 'fasta')
+    proteins = SeqIO.parse(f'{outfix}.faa', 'fasta')
 
     # Determine gene lengths
     gene_lengths = {protein.id:len(protein) for protein in proteins}
 
     if args.blast:
         # Blast protein sequences against reference database
-        hits = blast_genes("{}.faa".format(outfix), args.db, args.threads)
+        hits = blast_genes(f'{outfix}.faa', args.db, args.threads)
 
         # Filter hits
         good_hits = {k:v for k,v in hits.items() if float(v[2]) >= args.cutoff}
@@ -53,12 +53,12 @@ def __main__():
         length_ratios = {k:gene_lengths[k]/hit_lengths[k] for k in hit_lengths.keys()}
 
     # Output
-    with open('{}_results.txt'.format(outfix), 'w') as fo:
+    with open(f'{outfix}_results.txt', 'w') as fo:
         for k in gene_lengths.keys():
             try:
-                fo.write('{}\t{}\t{}\t{}\n'.format(k, gene_lengths[k], hit_lengths[k], length_ratios[k]))
+                fo.write(f'{k}\t{gene_lengths[k]}\t{hit_lengths[k]}\t{length_ratios[k]}\n')
             except:
-                fo.write('{}\t{}\tNA\tNA\n'.format(k, gene_lengths[k]))
+                fo.write(f'{k}\t{gene_lengths[k]}\tNA\tNA\n')
 
 if __name__ == "__main__":
     __main__()
