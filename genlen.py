@@ -26,15 +26,14 @@ def plot_hist(outfix, mode, values):
         plt.xlabel("Gene length ratio")
         plt.savefig(f'{outfix}_gene_ratios.png')
 
-if True:
-#def __main__():
-    parser = argparse.ArgumentParser(description='Call genes with prodigal, calculate gene length distribution and optionally compare to the nearest BLAST hits')
-    parser.add_argument('contigs', metavar='contigs_file', help='File containing contigs in fasta format')
-    parser.add_argument('--blast', action='store_true', help='Compare gene lengths to nearest BLAST hits in db')
-    parser.add_argument('--db', metavar='ref_db', default='/nfs/cds/Databases/UNIPROT/uniprot_sprot_bacteria.dmnd', help='Diamond reference database for gene alignment')
-    parser.add_argument('--cutoff', metavar='id_cutoff', default=97.0, help='Identity cutoff for a valid hit')
-    parser.add_argument('--plot', action='store_true', help='Plot histograms of gene length and ratio (if --blast)')
-    parser.add_argument('-t,', '--threads', metavar='threads', default=16, help='Number of compute threads')
+def __main__():
+    parser = argparse.ArgumentParser(description='Call genes with prodigal, calculate gene length distribution and optionally compare to the nearest BLAST hits.')
+    parser.add_argument('contigs', metavar='contigs_file', help='File containing contigs in fasta format.')
+    parser.add_argument('--blast', action='store_true', help='Compare gene lengths to nearest BLAST hits in db.')
+    parser.add_argument('--db', metavar='ref_db', default='/nfs/cds/Databases/UNIPROT/uniprot_sprot_bacteria.dmnd', help='Diamond reference database for gene alignment.')
+    parser.add_argument('--cutoff', metavar='id_cutoff', default=97.0, help='Identity cutoff for a valid hit. Default: 97.0.')
+    parser.add_argument('--plot', action='store_true', help='Plot histograms of gene length and ratio (if --blast).')
+    parser.add_argument('-t,', '--threads', metavar='threads', default=16, help='Number of compute threads. Default: 16.')
 
     args = parser.parse_args()
 
@@ -78,11 +77,12 @@ if True:
             except:
                 fo.write(f'{k}\t{gene_lengths[k]}\tNA\tNA\n')
 
+    # Graphs
     if args.plot:
         plot_hist(outfix, "len", gene_lengths.values())
         if args.blast:
             plot_hist(outfix, "ratio", length_ratios.values())
 
-#if __name__ == "__main__":
-#    __main__()
+if __name__ == "__main__":
+    __main__()
 
