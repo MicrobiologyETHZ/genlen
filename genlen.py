@@ -54,7 +54,7 @@ def __main__():
     proteins = SeqIO.parse(f'{outfix}.faa', 'fasta')
 
     # Determine gene lengths
-    gene_lengths = {protein.id:len(protein) for protein in proteins}
+    gene_lengths = {protein.id:len(protein)-1 for protein in proteins}
 
     if args.blast:
         # Blast protein sequences against reference database
