@@ -3,11 +3,13 @@ from Bio import SeqIO
 import matplotlib.pyplot as plt
 
 def align_genes(faa, db, threads):
-    arg = f'diamond blastp --threads {threads} --max-target-seqs 1 --db {db} --query {faa} --outfmt 6 qseqid sseqid qlen slen pident'
+    arg = f'diamond blastp --threads {threads} --db {db} --query {faa} --unal 1 --outfmt 6 qseqid sseqid qlen slen pident'
     results = subprocess.check_output(arg, shell=True).decode()
 
     hits = [line.split("\t") for line in results.splitlines()]
-    hits = {hit[0]:hit for hit in hits}
+    genes = set(hit[0] for hit in hits)
+    hits = [[hit for hit in hits if hit[0]==y] for y in genes]
+    hits = {hit[0][0]:hit[0] for hit in hits}
 
     return(hits)
 
@@ -80,7 +82,7 @@ if True:
                 towrite = '\t'.join(map(str, good_hits[protein.id]))
                 fo.write(f'{towrite}\n')
             except:
-                fo.write(f'{protein.id}\tNA\t{len(protein)}\tNA\tNA\n')
+                fo.write(f'{protein.id}\tNA\t{len(protein)}\tNA\tNA\tNA\n')
 
     # Graphs
     if args.plot:
