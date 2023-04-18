@@ -74,6 +74,8 @@ if True:
             else:
                 hit[3] = int(hit[3])
             hit.append(hit[2]/hit[3])
+    else:
+        hits = {x.id:[x.id, x.id, len(x)] for x in proteins}
 
     # Output
     with open(f'{outfix}_results.txt', 'w') as fo:
@@ -86,9 +88,9 @@ if True:
 
     # Graphs
     if args.plot:
-        plot_hist(outfix, "len", gene_lengths.values())
-        if args.blast:
-            plot_hist(outfix, "ratio", length_ratios.values())
+        plot_hist(outfix, "len", [x[2] for x in hits.values()])
+        if args.align:
+            plot_hist(outfix, "ratio", [x[2]/x[3] for x in hits.values()])
 
 #if __name__ == "__main__":
 #    __main__()
