@@ -3,15 +3,16 @@ from Bio import SeqIO
 import matplotlib.pyplot as plt
 
 def align_genes(faa, db, threads):
-    arg = f'diamond blastp --threads {threads} --db {db} --query {faa} --unal 1 --outfmt 6 qseqid sseqid qlen slen pident'
-    results = subprocess.check_output(arg, shell=True).decode()
-
+    cmd = f'diamond blastp --threads {threads} --db {db} --query {faa} --unal 1 --outfmt 6 qseqid sseqid qlen slen pident'
+    results = subprocess.check_output(cmd, shell=True).decode()
     hits = [line.split("\t") for line in results.splitlines()]
-    genes = set(hit[0] for hit in hits)
-    hits = [[hit for hit in hits if hit[0]==y] for y in genes]
-    hits = {hit[0][0]:hit[0] for hit in hits}
-
-    return(hits)
+    genes = []
+    best_hits = []
+    for hit in hits:
+        if not hit[0] in genes:
+            best_hits.append(hit)
+            genes.append(hit[0])
+    return(best_hits)
 
 def plot_hist(outfix, mode, values):
     plt.style.use('seaborn')
@@ -36,10 +37,9 @@ if True:
     parser.add_argument('--db', metavar='ref_db', default='/nfs/cds/Databases/UNIPROT/uniprot_trembl_bacteria.dmnd', help='DIAMOND reference database for gene alignment.')
     parser.add_argument('--cutoff', metavar='id_cutoff', default=97.0, help='Identity cutoff for a valid hit. Default: 97.0.')
     parser.add_argument('--plot', action='store_true', help='Plot histograms of gene length and ratio (if --align).')
-    parser.add_argument('-s', '--stop', action='store_true', default=False, help='Database contains stop codons. Default: False.')
+    parser.add_argument('-s', '--stop', action='store_true', default=True, help='Database excludes stop codons. Default: True.')
     parser.add_argument('-o', '--out', metavar='outdir', help='Output directory. Defaults to genlen_results in the same directory as the contigs file')
     parser.add_argument('-t,', '--threads', metavar='threads', default=16, help='Number of compute threads. Default: 16.')
-
     args = parser.parse_args()
 
     # Determine file names
@@ -64,33 +64,35 @@ if True:
         hits = align_genes(f'{outfix}.faa', args.db, args.threads)
 
         # Filter hits
-        hits = {k:v for k,v in hits.items() if float(v[4]) >= args.cutoff}
+        hits = [hit for hit in hits if float(hit[4]) >= args.cutoff]
 
-        # Subtract stop codons from lengths then calculate length ratio
-        for hit in hits.values():
-            hit[2] = int(hit[2])-1
+        # Add stop codons to lengths if missing then calculate length difference and ratio
+        for hit in hits:
+            hit[2] = int(hit[2])
             if args.stop:
-                hit[3] = int(hit[3])-1
+                hit[3] = int(hit[3])+1
             else:
                 hit[3] = int(hit[3])
+            hit.append(hit[2]-hit[3])
             hit.append(hit[2]/hit[3])
     else:
-        hits = {x.id:[x.id, x.id, len(x)] for x in proteins}
+        hits = [[protein.id, len(protein)] for protein in proteins]
 
     # Output
     with open(f'{outfix}_results.txt', 'w') as fo:
-        for protein in proteins:
+        for hit in hits:
             try:
-                towrite = '\t'.join(map(str, hits[protein.id]))
+                towrite = '\t'.join(map(str, hit))
                 fo.write(f'{towrite}\n')
             except:
-                fo.write(f'{protein.id}\tNA\t{len(protein)}\tNA\tNA\tNA\n')
+                fo.write(f'{protein.id}\tNA\t{len(protein)}\tNA\tNA\tNA\tNA\n')
 
     # Graphs
     if args.plot:
-        plot_hist(outfix, "len", [x[2] for x in hits.values()])
+        plot_hist(outfix, "len", [hit[2] for hit in hits])
         if args.align:
-            plot_hist(outfix, "ratio", [x[2]/x[3] for x in hits.values()])
+            plot_hist(outfix, "diff", [hit[5] for hit in hits])
+            plot_hist(outfix, "ratio", [hit[6] for hit in hits])
 
 #if __name__ == "__main__":
 #    __main__()
