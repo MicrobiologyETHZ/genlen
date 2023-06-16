@@ -64,7 +64,7 @@ if True:
         hits = align_genes(f'{outfix}.faa', args.db, args.threads)
 
         # Filter hits
-        good_hits = {k:v for k,v in hits.items() if float(v[4]) >= args.cutoff}
+        hits = {k:v for k,v in hits.items() if float(v[4]) >= args.cutoff}
 
         # Subtract stop codons from lengths then calculate length ratio
         for hit in hits.values():
@@ -81,7 +81,7 @@ if True:
     with open(f'{outfix}_results.txt', 'w') as fo:
         for protein in proteins:
             try:
-                towrite = '\t'.join(map(str, good_hits[protein.id]))
+                towrite = '\t'.join(map(str, hits[protein.id]))
                 fo.write(f'{towrite}\n')
             except:
                 fo.write(f'{protein.id}\tNA\t{len(protein)}\tNA\tNA\tNA\n')
