@@ -81,11 +81,11 @@ if True:
     # Output
     with open(f'{outfix}_results.txt', 'w') as fo:
         for hit in hits:
-            try:
+            if args.align:
                 towrite = '\t'.join(map(str, hit))
                 fo.write(f'{towrite}\n')
-            except:
-                fo.write(f'{protein.id}\tNA\t{len(protein)}\tNA\tNA\tNA\tNA\n')
+            else:
+                fo.write(f'{hit[0]}\tNA\t{hit[1]}\tNA\tNA\tNA\tNA\n')
 
     # Graphs
     if args.plot:
